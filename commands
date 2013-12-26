@@ -21,7 +21,7 @@ if [[ $1 == elasticsearch:* ]]; then
     fi
 
     PLUGIN_NAME="elasticsearch"
-    CONTAINER_NAME="$PLUGIN_NAME_$APP"
+    CONTAINER_NAME="${PLUGIN_NAME}_${APP}"
     HOST_DIR="$DOKKU_ROOT/$APP/$PLUGIN_NAME"
     ENVVAR_NAME="ELASTICSEARCH_URL"
 fi
