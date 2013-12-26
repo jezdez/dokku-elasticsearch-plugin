@@ -1,0 +1,125 @@
+#!/bin/bash
+set -e;
+
+# Check if name is specified
+if [[ $1 == elasticsearch:* ]]; then
+    if [[ -z $2 ]]; then
+        echo "You must specify an app name"
+        exit 1
+    else
+        APP="$2"
+        # Check if app exists with the same name
+        if [[ -d "$DOKKU_ROOT/$APP" ]]; then
+            APP_EXISTS=true
+        else
+            APP_EXISTS=false
+        fi
+    fi
+    if [[ ! -d "$PLUGIN_PATH/link" ]]; then
+        echo "Link plugin not found... Did you install it from https://github.com/rlaneve/dokku-link?"
+        exit 1
+    fi
+
+    PLUGIN_NAME="elasticsearch"
+    CONTAINER_NAME="$PLUGIN_NAME_$APP"
+    HOST_DIR="$DOKKU_ROOT/$APP/$PLUGIN_NAME"
+    ENVVAR_NAME="ELASTICSEARCH_URL"
+fi
+
+case "$1" in
+  elasticsearch:create)
+    # Check if Elasticsearch container is installed
+    IMAGE=$(docker images | grep "jezdez/elasticsearch" | awk '{print $3}')
+    if [[ -z $IMAGE ]]; then
+        echo "Elasticsearch image not found... Did you run 'dokku plugins-install' ?"
+        exit 1
+    fi
+
+    # Stop existing container with the same persistent Elasticsearch
+    ID=$(docker ps | grep "$CONTAINER_NAME" | awk '{print $1}')
+    if [[ ! -z "$ID" ]]; then
+        docker stop $ID > /dev/null
+    fi
+
+    # Check if an existing DB volume exists
+    if [[ -d $HOST_DIR ]]; then
+        echo "-----> Reusing $CONTAINER_NAME data"
+    else
+        mkdir -p $HOST_DIR
+        chown -R dokku:dokku $HOST_DIR
+    fi
+    VOLUME="$HOST_DIR:/var/lib/elasticsearch"
+
+    # Launch container
+    docker run -v $VOLUME -name=$CONTAINER_NAME -d jezdez/elasticsearch
+
+    # Link to a potential existing app
+    dokku elasticsearch:link $APP $APP
+    echo "-----> Elasticsearch container created: $CONTAINER_NAME"
+    sleep 1
+    dokku elasticsearch:info $APP
+    ;;
+
+  elasticsearch:delete)
+    # Stop the container
+    ID=$(docker ps -a | grep "$CONTAINER_NAME" |  awk '{print $1}')
+    if [[ ! -z $ID ]]; then
+        docker stop $ID > /dev/null
+        docker rm $ID  > /dev/null
+    fi
+    # Remove persistent volume
+    if [[ -d $HOST_DIR ]]; then
+        rm -rf $HOST_DIR
+    fi
+
+    # unlink this container as "elasticsearch"
+    dokku link:delete "$APP" "$CONTAINER_NAME" "$PLUGIN_NAME"
+    dokku config:unset "$APP" $ENVVAR_NAME
+    echo "-----> Elasticsearch container deleted: $CONTAINER_NAME"
+    ;;
+
+  elasticsearch:info)
+    ID=$(docker ps -a | grep "$CONTAINER_NAME" | awk '{print $1}')
+    IP=$(docker inspect $ID | grep IPAddress | cut -d '"' -f 4)
+    echo
+    echo "       Host: ${IP}"
+    echo "       Private ports: 9200, 9300"
+    echo
+    ;;
+
+  elasticsearch:link)
+    if $APP_EXISTS; then
+        # Check argument
+        if [[ -z $3 ]]; then
+            echo "You must specify a container name"
+            exit 1
+        fi
+        CONTAINER_NAME="elasticsearch_$3"
+
+        # link this container as "elasticsearch"
+        dokku link:create "$APP" "$CONTAINER_NAME" "$PLUGIN_NAME"
+
+        # figure out IP to set env var
+        ID=$(docker ps -a | grep "$CONTAINER_NAME" | awk '{print $1}')
+        IP=$(docker inspect $ID | grep IPAddress | cut -d '"' -f 4)
+        dokku config:set "$APP" $ENVVAR_NAME="http://${IP}:9200"
+        echo "-----> $APP linked to $CONTAINER_NAME container"
+    fi
+    ;;
+
+  elasticsearch:logs)
+    ID=$(docker ps -a | grep "$CONTAINER_NAME" |  awk '{print $1}')
+    docker logs $ID | tail -n 100
+    ;;
+
+  help)
+    cat && cat<<EOF
+    elasticsearch:create <app>                              Create a Elasticsearch container
+    elasticsearch:delete <app>                              Delete specified Elasticsearch container
+    elasticsearch:info <app>                                Display container informations
+    elasticsearch:link <app> <container>                    Link an app to a Elasticsearch container
+    elasticsearch:logs <app>                                Display last logs from Elasticsearch container
+EOF
+    ;;
+
+esac
