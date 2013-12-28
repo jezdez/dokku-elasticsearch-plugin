@@ -10,7 +10,6 @@ RUN curl http://packages.elasticsearch.org/GPG-KEY-elasticsearch | apt-key add -
 RUN echo "deb http://packages.elasticsearch.org/elasticsearch/0.90/debian stable main" >> /etc/apt/sources.list
 RUN apt-get -qq update
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y elasticsearch
-RUN echo "ulimit -n 65535" >> /etc/default/elasticsearch
 ADD run.sh /usr/local/bin/elasticsearch
 RUN chmod +x /usr/local/bin/elasticsearch
 
