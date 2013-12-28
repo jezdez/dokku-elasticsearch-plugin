@@ -51,7 +51,8 @@ case "$1" in
     VOLUME="$HOST_DIR:/var/lib/elasticsearch"
 
     # Launch container
-    docker run -v $VOLUME -name=$CONTAINER_NAME -d jezdez/elasticsearch
+    docker run -v $VOLUME -name=$CONTAINER_NAME -d jezdez/elasticsearch \
+        /usr/local/bin/elasticsearch
 
     # Link to a potential existing app
     dokku elasticsearch:link $APP $APP
@@ -94,7 +95,7 @@ case "$1" in
             echo "You must specify a container name"
             exit 1
         fi
-        CONTAINER_NAME="elasticsearch_$3"
+        CONTAINER_NAME="${PLUGIN_NAME}_${3}"
 
         # link this container as "elasticsearch"
         dokku link:create "$APP" "$CONTAINER_NAME" "$PLUGIN_NAME"
