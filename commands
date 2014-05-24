@@ -15,7 +15,7 @@ if [[ $1 == elasticsearch:* ]]; then
             APP_EXISTS=false
         fi
     fi
-    if [[ ! -d "$PLUGIN_PATH/dokku-link" ]]; then
+    if [[ (! -d "$PLUGIN_PATH/dokku-link") && (! -d "$PLUGIN_PATH/link") ]]; then
         echo "Link plugin not found... Did you install it from https://github.com/rlaneve/dokku-link?"
         exit 1
     fi
