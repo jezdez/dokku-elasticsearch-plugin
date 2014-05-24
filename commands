@@ -3,16 +3,18 @@ set -e;
 
 # Check if name is specified
 if [[ $1 == elasticsearch:* ]]; then
-    if [[ -z $2 ]]; then
-        echo "You must specify an app name"
-        exit 1
-    else
-        APP="$2"
-        # Check if app exists with the same name
-        if [[ -d "$DOKKU_ROOT/$APP" ]]; then
-            APP_EXISTS=true
+    if [[ "$1" != "elasticsearch:list" ]]; then
+        if [[ -z $2 ]]; then
+            echo "You must specify an app name"
+            exit 1
         else
-            APP_EXISTS=false
+            APP="$2"
+            # Check if app exists with the same name
+            if [[ -d "$DOKKU_ROOT/$APP" ]]; then
+                APP_EXISTS=true
+            else
+                APP_EXISTS=false
+            fi
         fi
     fi
     if [[ ! -d "$PLUGIN_PATH/link" ]]; then
@@ -124,6 +126,10 @@ case "$1" in
     fi
     ;;
 
+  elasticsearch:list)
+    ls -d ${DOKKU_ROOT}/*/${PLUGIN_NAME} | sed "s|${DOKKU_ROOT}/\(.*\)/${PLUGIN_NAME}\$|\1|"
+    ;;
+
   elasticsearch:logs)
     ID=$(docker ps -a | grep "$CONTAINER_NAME" |  awk '{print $1}')
     docker logs $ID | tail -n 100
@@ -131,6 +137,7 @@ case "$1" in
 
   help)
     cat && cat<<EOF
+    elasticsearch:list                                      List all Elasticsearch containers
     elasticsearch:create <app>                              Create a Elasticsearch container
     elasticsearch:delete <app>                              Delete specified Elasticsearch container
     elasticsearch:info <app>                                Display container informations

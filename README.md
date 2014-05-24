@@ -21,6 +21,7 @@ Commands
 --------
 ```
 $ dokku help
+     elasticsearch:link                    List all Elasticsearch containers
      elasticsearch:create <app>            Create a Elasticsearch container
      elasticsearch:delete <app>            Delete specified Elasticsearch container
      elasticsearch:info <app>              Display container informations
@@ -44,6 +45,11 @@ $ ssh dokku@server elasticsearch:create foo # Client side
 
 Advanced usage
 --------------
+
+Listing containers:
+```
+dokku elasticsearch:list
+```
 
 Deleting containers:
 ```
