@@ -67,7 +67,7 @@ case "$1" in
     VOLUME="$HOST_DIR:/var/lib/elasticsearch"
 
     # Launch container
-    docker run -v $VOLUME -name=$CONTAINER_NAME -d jezdez/elasticsearch \
+    docker run -v $VOLUME --name=$CONTAINER_NAME -d jezdez/elasticsearch \
         /usr/local/bin/elasticsearch
 
     # Link to a potential existing app
