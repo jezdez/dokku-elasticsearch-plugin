@@ -52,7 +52,7 @@ case "$1" in
 
     # Launch container
     docker run -v $VOLUME -name=$CONTAINER_NAME -d jezdez/elasticsearch \
-        /usr/local/bin/elasticsearch
+        /usr/local/bin/run
 
     # Link to a potential existing app
     dokku elasticsearch:link $APP $APP
