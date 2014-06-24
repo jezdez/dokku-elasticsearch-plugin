@@ -1,0 +1,16 @@
+{
+    "containers": [
+        {
+            "name": "elasticsearch",
+            "dockerfile": ".",
+            "image": "blag/elasticsearch",
+            "run": {
+                "detach": true,
+                "privileged": true,
+                "publish": ["9200:9200"],
+                "env": ["ES_MIN_MEM=1g","ES_MAX_MEM=1g"],
+                "volume": ["/data/elasticsearch/shared:/data/elasticsearch/shared"]
+            }
+        }
+    ]
+}
