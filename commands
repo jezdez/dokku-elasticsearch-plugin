@@ -38,7 +38,7 @@ if [[ $1 == elasticsearch:* ]]; then
 
     DOCKER_IMAGE=blag/elasticsearch
     PLUGIN_NAME="elasticsearch"
-    CONTAINER_NAME="${PLUGIN_NAME}_${APP}"
+    CONTAINER_NAME="${PLUGIN_NAME}/${APP}"
     VOLUME_FILE="$DOKKU_ROOT/$APP/$PLUGIN_NAME"
     ENVVAR_NAME="ELASTICSEARCH_URL"
 fi
@@ -47,7 +47,7 @@ case "$1" in
   elasticsearch:create)
     DB_IMAGE="elasticsearch/$APP"
     # Check if Elasticsearch container is installed
-    IMAGE=$(docker images | grep ${DB_IMAGE} | awk '{print $3}')
+    IMAGE=$(docker images | grep ${DOCKER_IMAGE} | awk '{print $3}')
     if [[ -z $IMAGE ]]; then
         echo "Elasticsearch image not found... Did you run 'dokku plugins-install' ?"
         exit 1
@@ -69,8 +69,10 @@ case "$1" in
     VOLUME="$VOLUME_FILE:/data/elasticsearch/shared"
 
     # Fork DB image
+    echo "Running parent image"
     ID=$(docker run -d $DOCKER_IMAGE exit 0)
     docker wait $ID > /dev/null
+    echo "Committing image"
     IMAGE=$(docker commit $ID)
     docker tag $IMAGE $DB_IMAGE
     # Launch container
@@ -78,6 +80,7 @@ case "$1" in
     sleep 4
 
     # Link to a potential existing app
+    echo "Linking"
     dokku elasticsearch:link $APP $APP
     echo "-----> Elasticsearch container created: $CONTAINER_NAME"
     sleep 1
@@ -95,7 +98,7 @@ case "$1" in
         sleep 1
     fi
     # Remove image
-    IMAGE=$(docker images  grep "$DB_IMAGE" | aws '{ print $1 }')
+    IMAGE=$(docker images | grep "$DB_IMAGE" | aws '{ print $1 }')
     if [[ ! -z $IMAGE ]]; then
         docker rmi $IMAGE > /dev/null
     fi
@@ -129,13 +132,16 @@ case "$1" in
             echo "You must specify a container name"
             exit 1
         fi
-        CONTAINER_NAME="${PLUGIN_NAME}_${3}"
+        CONTAINER_NAME="${PLUGIN_NAME}/${3}"
 
         # link this container as "elasticsearch"
+        echo dokku link:create $APP $CONTAINER_NAME $PLUGIN_NAME
         dokku link:create "$APP" "$CONTAINER_NAME" "$PLUGIN_NAME"
 
         # figure out IP to set env var
+        echo ID: $(docker ps -a | grep "$CONTAINER_NAME" | awk '{ print $1 }')
         ID=$(docker ps -a | grep "$CONTAINER_NAME" | awk '{print $1}')
+        echo IP: $(docker inspect $ID | grep IPAddress | cut -d '"' -f 4)
         IP=$(docker inspect $ID | grep IPAddress | cut -d '"' -f 4)
         # Link database using dokku command
         dokku config:set "$APP" $ENVVAR_NAME="http://${IP}:9200"
