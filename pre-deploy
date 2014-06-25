@@ -1,0 +1,38 @@
+#!/bin/bash
+set -e;
+
+APP="$1"
+
+DOCKER_IMAGE="blag/elasticsearch"
+ES_APP_IMAGE="elasticsearch/$APP"
+
+# Check if an existing DB volume exists
+ES_APP_IMAGE_ID=$(docker images | grep "$ES_APP_IMAGE" | awk '{ print $3 }')
+if [[ -n $ES_APP_IMAGE_ID ]]; then
+    echo    "-----> Checking status of Elasticsearch"
+
+    # Check if DB container is installed
+    ES_IMAGE=$(docker images | grep "$DOCKER_IMAGE" | awk '{ print $3 }')
+    if [[ -z $ES_IMAGE ]]; then
+        echo "Elasticsearch image not found... Did you run 'dokku plugins-install' ?"
+        exit 1
+    fi
+
+    echo    "       Found image elasticsearch/$APP database"
+    echo -n "       Checking status... "
+
+    ES_APP_CONTAINER_ID=$(docker ps | grep "$ES_APP_IMAGE" | awk '{ print $1 }')
+    if [[ -n $ES_APP_CONTAINER_ID ]]; then
+        echo "ok."
+    else
+        echo "stopped."
+
+        ES_VOLUME="$DOKKU_ROOT/$APP/elasticsearch:/data/elasticsearch/shared"
+
+        echo -n "      Launching $ES_APP_IMAGE... "
+        echo "COMMAND: docker run -v $ES_VOLUME -d $ES_APP_IMAGE /run.sh"
+        ID=$(docker run -v $ES_VOLUME -d $ES_APP_IMAGE /run.sh)
+        sleep 1
+        echo "ok."
+    fi
+fi
