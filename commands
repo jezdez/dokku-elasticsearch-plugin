@@ -76,7 +76,7 @@ case "$1" in
     IMAGE=$(docker commit $ID)
     docker tag $IMAGE $DB_IMAGE
     # Launch container
-    ID=$(docker run -v $VOLUME -name=$CONTAINER_NAME -d ${DB_IMAGE} /run.sh)
+    ID=$(docker run -v $VOLUME --name=$CONTAINER_NAME -d ${DB_IMAGE} /run.sh)
     sleep 4
 
     # Link to a potential existing app
