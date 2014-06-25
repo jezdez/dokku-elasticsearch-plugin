@@ -151,7 +151,8 @@ case "$1" in
     ;;
 
   elasticsearch:list)
-    ls -d ${DOKKU_ROOT}/*/${PLUGIN_NAME} 2>/dev/null | sed "s|${DOKKU_ROOT}/\(.*\)/${PLUGIN_NAME}\$|\1|"
+    echo Elasticsearch containers:
+    ls -d ${DOKKU_ROOT}/*/${PLUGIN_NAME} 2>/dev/null | sed "s|${DOKKU_ROOT}/\(.*\)/${PLUGIN_NAME}\$|  - \1|"
     ;;
 
   elasticsearch:logs)
