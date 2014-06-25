@@ -45,7 +45,6 @@ fi
 
 case "$1" in
   elasticsearch:create)
-    DB_IMAGE="elasticsearch/$APP"
     # Check if Elasticsearch container is installed
     IMAGE=$(docker images | grep ${DOCKER_IMAGE} | awk '{print $3}')
     if [[ -z $IMAGE ]]; then
@@ -74,9 +73,9 @@ case "$1" in
     docker wait $ID > /dev/null
     echo "Committing image"
     IMAGE=$(docker commit $ID)
-    docker tag $IMAGE $DB_IMAGE
+    docker tag $IMAGE $CONTAINER_NAME
     # Launch container
-    ID=$(docker run -v $VOLUME --name=$CONTAINER_NAME -d ${DB_IMAGE} /run.sh)
+    ID=$(docker run -v $VOLUME -d $CONTAINER_NAME /run.sh)
     sleep 4
 
     # Link to a potential existing app
@@ -88,7 +87,6 @@ case "$1" in
     ;;
 
   elasticsearch:delete)
-    DB_IMAGE="blag/elasticsearch"
     ID=$(docker ps -a | grep "$CONTAINER_NAME" |  awk '{print $1}')
     # Stop and remove the container
     if [[ ! -z $ID ]]; then
@@ -98,7 +96,7 @@ case "$1" in
         sleep 1
     fi
     # Remove image
-    IMAGE=$(docker images | grep "$DB_IMAGE" | aws '{ print $1 }')
+    IMAGE=$(docker images | grep "$DOCKER_IMAGE" | aws '{ print $1 }')
     if [[ ! -z $IMAGE ]]; then
         docker rmi $IMAGE > /dev/null
     fi
