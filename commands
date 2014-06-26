@@ -41,7 +41,9 @@ if [[ $1 == elasticsearch:* ]]; then
     DOCKER_IMAGE=blag/elasticsearch
     PLUGIN_NAME="elasticsearch"
     CONTAINER_NAME="${PLUGIN_NAME}/${APP}"
-    VOLUME_FILE="$DOKKU_ROOT/$APP/$PLUGIN_NAME"
+    ELASTICSEARCH_DATA_DIR="$DOKKU_ROOT/$APP/$PLUGIN_NAME"
+    VOLUME_FILE="$ELASTICSEARCH_DATA_DIR/VOLUME"
+    PORT_FILE="$ELASTICSEARCH_DATA_DIR/PORT"
     ENVVAR_NAME="ELASTICSEARCH_URL"
 fi
 
@@ -77,12 +79,25 @@ case "$1" in
     IMAGE=$(docker commit $ID)
     docker tag $IMAGE $CONTAINER_NAME
     # Launch container
-    ID=$(docker run -v $VOLUME -d $CONTAINER_NAME /run.sh)
+    ID=$(docker run -v $VOLUME -p 9200 -d $CONTAINER_NAME /run.sh)
     sleep 4
+    # Rename persistent volume
+    if [[ ! -f "$VOLUME_FILE" ]]; then
+        VOLUME_PATH=$(docker inspect $ID | grep /data/elasticsearch/shared | awk '{ print $2 }' | sed -e's/"//g')
+        if [[ -z $VOLUME_PATH ]]; then
+            echo "Your docker version is too old, please update it"
+            exit 1
+        fi
+        echo $VOLUME_PATH > "$VOLUME_FILE"
+    fi
+    # Write port for further usage
+    PORT=$(docker port $ID 9200 | sed 's/0.0.0.0://')
+    echo $PORT > "$PORT_FILE"
 
     # Link to a potential existing app
     echo "Linking"
     dokku elasticsearch:link $APP $APP
+    echo
     echo "-----> Elasticsearch container created: $CONTAINER_NAME"
     sleep 1
     dokku elasticsearch:info $APP
@@ -132,21 +147,27 @@ case "$1" in
             echo "You must specify a container name"
             exit 1
         fi
-        CONTAINER_NAME="${PLUGIN_NAME}/${3}"
-
-        # link this container as "elasticsearch"
-        echo dokku link:create $APP $CONTAINER_NAME $PLUGIN_NAME
-        dokku link:create "$APP" "$CONTAINER_NAME" "$PLUGIN_NAME"
-
-        # figure out IP to set env var
-        echo ID: $(docker ps -a | grep "$CONTAINER_NAME" | awk '{ print $1 }')
-        ID=$(docker ps -a | grep "$CONTAINER_NAME" | awk '{print $1}')
-        echo IP: $(docker inspect $ID | grep IPAddress | cut -d '"' -f 4)
+        CONTAINER_NAME="${PLUGIN_NAME}/$APP"
+        PORT=$(car "$PORT_FILE")
         IP=$(docker inspect $ID | grep IPAddress | cut -d '"' -f 4)
         # Link database using dokku command
-        dokku config:set "$APP" $ENVVAR_NAME="http://${IP}:9200"
+        dokku config:set $APP $ENVVAR_NAME="http://${IP}:9200"
         echo
-        echo "-----> $APP linked to $CONTAINER_NAME container"
+        echo "-----> $APP linked to $CONTAINER_NAME database"
+
+        # link this container as "elasticsearch"
+        #echo dokku link:create $APP $CONTAINER_NAME $PLUGIN_NAME
+        #dokku link:create "$APP" "$CONTAINER_NAME" "$PLUGIN_NAME"
+        #
+        # figure out IP to set env var
+        #echo ID: $(docker ps -a | grep "$CONTAINER_NAME" | awk '{ print $1 }')
+        #ID=$(docker ps -a | grep "$CONTAINER_NAME" | awk '{print $1}')
+        #echo IP: $(docker inspect $ID | grep IPAddress | cut -d '"' -f 4)
+        #IP=$(docker inspect $ID | grep IPAddress | cut -d '"' -f 4)
+        ## Link database using dokku command
+        #dokku config:set "$APP" $ENVVAR_NAME="http://${IP}:9200"
+        #echo
+        #echo "-----> $APP linked to $CONTAINER_NAME container"
     fi
     ;;
 
