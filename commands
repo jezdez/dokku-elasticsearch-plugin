@@ -42,6 +42,7 @@ if [[ $1 == elasticsearch:* ]]; then
     PLUGIN_NAME="elasticsearch"
     CONTAINER_NAME="${PLUGIN_NAME}/${APP}"
     ELASTICSEARCH_DATA_DIR="$DOKKU_ROOT/$APP/$PLUGIN_NAME"
+    CONTAINER_DATA_DIR="/data/elasticsearch/shared"
     VOLUME_FILE="$ELASTICSEARCH_DATA_DIR/VOLUME"
     PORT_FILE="$ELASTICSEARCH_DATA_DIR/PORT"
     ENVVAR_NAME="ELASTICSEARCH_URL"
@@ -63,7 +64,7 @@ case "$1" in
     fi
 
     # Check if an existing DB volume exists
-    if [[ -d $VOLUME_FILE ]]; then
+    if [[ -f $VOLUME_FILE ]]; then
         if [[ "dokku:dokku" != $(ls -l "$ELASTICSEARCH_DATA_DIR" | grep elasticsearch | awk '{ print $3:$4 }') ]]; then
             chown -R dokku:dokku "$ELASTICSEARCH_DATA_DIR"
         fi
@@ -72,7 +73,7 @@ case "$1" in
         touch "$VOLUME_FILE"
         chown -R dokku:dokku $VOLUME_FILE
     fi
-    VOLUME="$VOLUME_FILE:/data/elasticsearch/shared"
+    VOLUME="$VOLUME_FILE:$CONTAINER_DATA_DIR"
 
     # Fork DB image
     echo "Running parent image"
@@ -82,11 +83,12 @@ case "$1" in
     IMAGE=$(docker commit $ID)
     docker tag $IMAGE $CONTAINER_NAME
     # Launch container
-    ID=$(docker run -v $VOLUME -p 9200 -d $CONTAINER_NAME /run.sh)
+    echo docker run -v $(cat $VOLUME) -p 9200 -d $CONTAINER_NAME /run.sh
+    ID=$(docker run -v $(cat $VOLUME) -p 9200 -d $CONTAINER_NAME /run.sh)
     sleep 4
     # Rename persistent volume
     if [[ ! -f "$VOLUME_FILE" ]]; then
-        VOLUME_PATH=$(docker inspect $ID | grep /data/elasticsearch/shared | awk '{ print $2 }' | sed -e's/"//g')
+        VOLUME_PATH=$(docker inspect $ID | grep $CONTAINER_DATA_DIR | awk '{ print $2 }' | sed -e's/"//g')
         if [[ -z $VOLUME_PATH ]]; then
             echo "Your docker version is too old, please update it"
             exit 1
@@ -112,7 +114,7 @@ case "$1" in
     if [[ ! -z $ID ]]; then
         docker stop $ID > /dev/null
         sleep 1
-        docker rm $ID  > /dev/null
+        docker rm -v $ID > /dev/null
         sleep 1
     fi
     # Remove image
