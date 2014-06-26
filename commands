@@ -83,8 +83,8 @@ case "$1" in
     IMAGE=$(docker commit $ID)
     docker tag $IMAGE $CONTAINER_NAME
     # Launch container
-    echo docker run -v $(cat $VOLUME) -p 9200 -d $CONTAINER_NAME /run.sh
-    ID=$(docker run -v $(cat $VOLUME) -p 9200 -d $CONTAINER_NAME /run.sh)
+    echo docker run -v $(cat $VOLUME_FILE) -p 9200 -d $CONTAINER_NAME /run.sh
+    ID=$(docker run -v $(cat $VOLUME_FILE) -p 9200 -d $CONTAINER_NAME /run.sh)
     sleep 4
     # Rename persistent volume
     if [[ ! -f "$VOLUME_FILE" ]]; then
