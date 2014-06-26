@@ -151,7 +151,7 @@ case "$1" in
             exit 1
         fi
         CONTAINER_NAME="${PLUGIN_NAME}/$APP"
-        PORT=$(car "$PORT_FILE")
+        PORT=$(cat "$PORT_FILE")
         IP=$(docker inspect $ID | grep IPAddress | cut -d '"' -f 4)
         # Link database using dokku command
         dokku config:set $APP $ENVVAR_NAME="http://${IP}:9200"
