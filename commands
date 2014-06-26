@@ -68,12 +68,14 @@ case "$1" in
         if [[ "dokku:dokku" != $(ls -l "$ELASTICSEARCH_DATA_DIR" | grep elasticsearch | awk '{ print $3":"$4 }') ]]; then
             chown -R dokku:dokku "$ELASTICSEARCH_DATA_DIR"
         fi
+        VOLUME="`cat $VOLUME_FILE`:$CONTAINER_DATA_DIR"
+        echo
         echo "-----> Reusing $CONTAINER_NAME data"
     else
         touch "$VOLUME_FILE"
         chown -R dokku:dokku $VOLUME_FILE
+        VOLUME=$CONTAINER_DATA_DIR
     fi
-    VOLUME="$VOLUME_FILE:$CONTAINER_DATA_DIR"
 
     # Fork DB image
     echo "Running parent image"
@@ -83,12 +85,12 @@ case "$1" in
     IMAGE=$(docker commit $ID)
     docker tag $IMAGE $CONTAINER_NAME
     # Launch container
-    echo docker run -v $(cat $VOLUME_FILE) -p 9200 -d $CONTAINER_NAME /run.sh
-    ID=$(docker run -v $(cat $VOLUME_FILE) -p 9200 -d $CONTAINER_NAME /run.sh)
+    echo docker run -v $VOLUME -p 9200 -d $CONTAINER_NAME /run.sh
+    ID=$(docker run -v $VOLUME -p 9200 -d $CONTAINER_NAME /run.sh)
     sleep 4
     # Rename persistent volume
     if [[ ! -f "$VOLUME_FILE" ]]; then
-        VOLUME_PATH=$(docker inspect $ID | grep $CONTAINER_DATA_DIR | awk '{ print $2 }' | sed -e's/"//g')
+        VOLUME_PATH=$(docker inspect $ID | grep /var/lib/docker/vfs/dir/ | awk '{ print $2 }' | sed -e's/"//g')
         if [[ -z $VOLUME_PATH ]]; then
             echo "Your docker version is too old, please update it"
             exit 1
