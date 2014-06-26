@@ -64,7 +64,7 @@ case "$1" in
 
     # Check if an existing DB volume exists
     if [[ -d $VOLUME_FILE ]]; then
-        if [[ "dokku:dokku" == $(ls -l "$DOKKU_ROOT/$APP/$PLUGIN_NAME" | grep elasticsearch | awk '{ print $3:$4 }') ]]; then
+        if [[ "dokku:dokku" != $(ls -l "$DOKKU_ROOT/$APP/$PLUGIN_NAME" | grep elasticsearch | awk '{ print $3:$4 }') ]]; then
             chown -R dokku:dokku "$DOKKU_ROOT/$APP/$PLUGIN_NAME"
         fi
         echo "-----> Reusing $CONTAINER_NAME data"
