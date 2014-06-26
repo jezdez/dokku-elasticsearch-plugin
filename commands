@@ -113,7 +113,7 @@ case "$1" in
         sleep 1
     fi
     # Remove image
-    IMAGE=$(docker images | grep "$DOCKER_IMAGE" | aws '{ print $1 }')
+    IMAGE=$(docker images | grep "$DOCKER_IMAGE" | awk '{ print $1 }')
     if [[ ! -z $IMAGE ]]; then
         docker rmi $IMAGE > /dev/null
     fi
