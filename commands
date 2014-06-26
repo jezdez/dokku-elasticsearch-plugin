@@ -138,7 +138,7 @@ case "$1" in
     ;;
 
   elasticsearch:info)
-    ID=$(docker ps -a | grep "$CONTAINER_NAME" | awk '{print $1}')
+    ID=$(docker ps -a | grep "$CONTAINER_NAME" | awk '{ print $1 }')
     IP=$(docker inspect $ID | grep IPAddress | cut -d '"' -f 4)
 
     echo
@@ -156,6 +156,7 @@ case "$1" in
         fi
         CONTAINER_NAME="${PLUGIN_NAME}/$APP"
         PORT=$(cat "$PORT_FILE")
+        ID=$(docker ps -a | grep "$CONTAINER_NAME" | awk '{ print $1 }')
         IP=$(docker inspect $ID | grep IPAddress | cut -d '"' -f 4)
         # Link database using dokku command
         dokku config:set $APP $ENVVAR_NAME="http://${IP}:9200"
