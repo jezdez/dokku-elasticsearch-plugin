@@ -16,7 +16,23 @@ if [[ $1 == elasticsearch:* ]]; then
         fi
     fi
     if [[ ! -d "$PLUGIN_PATH/link" ]]; then
-        echo "Link plugin not found... Did you install it from https://github.com/rlaneve/dokku-link?"
+        if [[ -d "$PLUGIN_PATH/dokku-link" ]]; then
+            echo "Found 'dokku-link/' directory but not a 'link/' directory. Did you install/clone dokku-link into the link/ directory instead? If so, please run"
+            echo ""
+            echo "    mv dokku-link link"
+            echo ""
+            echo "to fix it."
+        else
+            echo "Link plugin not found..."
+            echo ""
+            echo "Did you install it from https://github.com/rlaneve/dokku-link?"
+            echo ""
+            echo "Run these commands to install it:"
+            echo ""
+            echo "    cd /${PLUGIN_PATH}"
+            echo "    sudo git clone https://github.com/rlaneve/dokku-link link"
+            echo "    sudo dokku plugins-install"
+        fi
         exit 1
     fi
 
