@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e;
+#!/usr/bin/env bash
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 
 # Check if name is specified
 if [[ $1 == elasticsearch:* ]]; then
@@ -138,6 +138,10 @@ case "$1" in
     elasticsearch:link <app> <container>                    Link an app to a Elasticsearch container
     elasticsearch:logs <app>                                Display last logs from Elasticsearch container
 EOF
+    ;;
+
+  *)
+    exit $DOKKU_NOT_IMPLEMENTED_EXIT
     ;;
 
 esac
