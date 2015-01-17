@@ -55,6 +55,7 @@ case "$1" in
     ID=$(docker ps | grep "$CONTAINER_NAME" | awk '{print $1}')
     if [[ ! -z "$ID" ]]; then
         docker stop $ID > /dev/null
+        docker rm $ID > /dev/null
     fi
 
     # Check if an existing DB volume exists
