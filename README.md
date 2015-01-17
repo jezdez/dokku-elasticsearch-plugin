@@ -14,8 +14,8 @@ dokku plugins-install
 This plugin also requires the dokku-link plugin to be installed:
 https://github.com/rlaneve/dokku-link
 
-It uses the excellent Elasticsearch docker image by the people at Orchard
-( https://orchardup.com/ ): https://github.com/orchardup/docker-elasticsearch
+The docker image is a modified version from the excellent Elasticsearch docker image by the people at Orchard
+(https://orchardup.com/): https://github.com/orchardup/docker-elasticsearch
 
 Commands
 --------
