@@ -1,10 +1,17 @@
-FROM charliek/openjdk-jre-7
-MAINTAINER Ben Firshman "ben@orchardup.com"
+FROM ubuntu-debootstrap:14.04
+MAINTAINER Vincent Fretin "vincentfretin@ecreall.com"
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y curl sudo
+RUN \
+  apt-get update && \
+  DEBIAN_FRONTEND=noninteractive apt-get install -y openjdk-7-jre-headless curl sudo && \
+  rm -rf /var/lib/apt/lists/*
+ENV JAVA_HOME /usr/lib/jvm/java-7-openjdk-amd64
+
 RUN curl http://packages.elasticsearch.org/GPG-KEY-elasticsearch | apt-key add -
-RUN echo "deb http://packages.elasticsearch.org/elasticsearch/1.3/debian stable main" >> /etc/apt/sources.list
-RUN apt-get -qq update && DEBIAN_FRONTEND=noninteractive apt-get install -y elasticsearch
+RUN echo "deb http://packages.elasticsearch.org/elasticsearch/1.4/debian stable main" >> /etc/apt/sources.list
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y elasticsearch && \
+    rm -rf /var/lib/apt/lists/*
 ADD run /usr/local/bin/run
 RUN chmod +x /usr/local/bin/run
 
