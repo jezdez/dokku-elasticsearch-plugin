@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -e; [[ $DOKKU_TRACE ]] && set -x
+
+APP="$1"
+PLUGIN_NAME="elasticsearch"
+CONTAINER_NAME="${PLUGIN_NAME}_${APP}"
+HOST_DIR="$DOKKU_ROOT/$APP/$PLUGIN_NAME"
+ENVVAR_NAME="ELASTICSEARCH_URL"
+
+# Check if an existing DB volume exists
+if [[ -d $HOST_DIR ]]; then
+    # Check if Elasticsearch container is installed
+    IMAGE=$(docker images | grep "jezdez/elasticsearch" | awk '{print $3}')
+    if [[ -z $IMAGE ]]; then
+        echo "Elasticsearch image not found... Did you run 'dokku plugins-install' ?"
+        exit 1
+    fi
+
+    echo -n "-----> Checking status of elasticsearch... "
+    CONTAINER_ID=$(docker ps | grep "$CONTAINER_NAME" | awk '{print $1}')
+    # If the elasticsearch container is stopped, start it, before the application is deployed
+    if [[ -z "$CONTAINER_ID" ]]; then
+        echo "stopped."
+
+        VOLUME="$HOST_DIR:/var/lib/elasticsearch"
+
+        # Launch container
+        echo -n "       Launching elasticsearch... "
+        # remove stopped container if any
+        docker rm $CONTAINER_NAME >/dev/null 2>/dev/null
+        docker run -v $VOLUME --name=$CONTAINER_NAME -d jezdez/elasticsearch \
+            /usr/local/bin/run >/dev/null
+        # figure out IP to set env var
+        ID=$(docker ps -a | grep "$CONTAINER_NAME" | awk '{print $1}')
+        IP=$(docker inspect $ID | grep IPAddress | cut -d '"' -f 4)
+        # FIXME find a way to set the variable without restarting a second time the application
+        dokku config:set "$APP" $ENVVAR_NAME="http://${IP}:9200"
+        echo "started."
+    else
+        echo "ok."
+    fi
+fi
