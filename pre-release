@@ -27,7 +27,10 @@ if [[ -d $HOST_DIR ]]; then
         # Launch container
         echo -n "       Launching elasticsearch... "
         # remove stopped container if any
-        docker rm $CONTAINER_NAME >/dev/null 2>/dev/null
+        CONTAINER_ID=$(docker ps -a | grep "$CONTAINER_NAME" | awk '{print $1}')
+        if [[ ! -z "$CONTAINER_ID" ]]; then
+            docker rm $CONTAINER_ID >/dev/null
+        fi
         docker run -v $VOLUME --name=$CONTAINER_NAME -d jezdez/elasticsearch \
             /usr/local/bin/run >/dev/null
         # figure out IP to set env var
