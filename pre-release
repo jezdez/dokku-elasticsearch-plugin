@@ -33,11 +33,6 @@ if [[ -d $HOST_DIR ]]; then
         fi
         docker run -v $VOLUME --name=$CONTAINER_NAME -d jezdez/elasticsearch \
             /usr/local/bin/run >/dev/null
-        # figure out IP to set env var
-        ID=$(docker ps -a | grep "$CONTAINER_NAME" | awk '{print $1}')
-        IP=$(docker inspect $ID | grep IPAddress | cut -d '"' -f 4)
-        # FIXME find a way to set the variable without restarting a second time the application
-        dokku config:set "$APP" $ENVVAR_NAME="http://${IP}:9200"
         echo "started."
     else
         echo "ok."
