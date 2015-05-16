@@ -31,7 +31,9 @@ if [[ -d $HOST_DIR ]]; then
         if [[ ! -z "$CONTAINER_ID" ]]; then
             docker rm $CONTAINER_ID >/dev/null
         fi
-        docker run -v $VOLUME --name=$CONTAINER_NAME -d elasticsearch:1.5 >/dev/null
+        CWD=$(cd $(dirname $0); pwd)
+        CONFIG="$CWD/config:/usr/share/elasticsearch/config"
+        docker run -v $VOLUME -v $CONFIG --name=$CONTAINER_NAME -d elasticsearch:1.5 >/dev/null
         echo "started."
     else
         echo "ok."
