@@ -45,7 +45,7 @@ fi
 case "$1" in
   elasticsearch:create)
     # Check if Elasticsearch container is installed
-    IMAGE=$(docker images | grep "jezdez/elasticsearch" | awk '{print $3}')
+    IMAGE=$(docker images | grep "elasticsearch" | awk '{print $3}')
     if [[ -z $IMAGE ]]; then
         echo "Elasticsearch image not found... Did you run 'dokku plugins-install' ?"
         exit 1
@@ -65,11 +65,10 @@ case "$1" in
         mkdir -p $HOST_DIR
         chown -R dokku:dokku $HOST_DIR
     fi
-    VOLUME="$HOST_DIR:/var/lib/elasticsearch"
+    VOLUME="$HOST_DIR:/usr/share/elasticsearch/data"
 
     # Launch container
-    docker run -v $VOLUME --name=$CONTAINER_NAME -d jezdez/elasticsearch \
-        /usr/local/bin/run
+    docker run -v $VOLUME --name=$CONTAINER_NAME -d elasticsearch:1.5
 
     # Link to a potential existing app
     dokku elasticsearch:link $APP $APP

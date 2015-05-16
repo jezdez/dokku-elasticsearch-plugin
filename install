@@ -1,5 +1,4 @@
 #!/bin/bash
 
 # Build docker image
-CWD=$(cd $(dirname $0); pwd)
-docker build --pull -t jezdez/elasticsearch $CWD
+docker pull elasticsearch:1.5

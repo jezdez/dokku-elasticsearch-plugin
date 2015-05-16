@@ -10,7 +10,7 @@ ENVVAR_NAME="ELASTICSEARCH_URL"
 # Check if an existing DB volume exists
 if [[ -d $HOST_DIR ]]; then
     # Check if Elasticsearch container is installed
-    IMAGE=$(docker images | grep "jezdez/elasticsearch" | awk '{print $3}')
+    IMAGE=$(docker images | grep "elasticsearch" | awk '{print $3}')
     if [[ -z $IMAGE ]]; then
         echo "Elasticsearch image not found... Did you run 'dokku plugins-install' ?"
         exit 1
@@ -22,7 +22,7 @@ if [[ -d $HOST_DIR ]]; then
     if [[ -z "$CONTAINER_ID" ]]; then
         echo "stopped."
 
-        VOLUME="$HOST_DIR:/var/lib/elasticsearch"
+        VOLUME="$HOST_DIR:/usr/share/elasticsearch/data"
 
         # Launch container
         echo -n "       Launching elasticsearch... "
@@ -31,8 +31,7 @@ if [[ -d $HOST_DIR ]]; then
         if [[ ! -z "$CONTAINER_ID" ]]; then
             docker rm $CONTAINER_ID >/dev/null
         fi
-        docker run -v $VOLUME --name=$CONTAINER_NAME -d jezdez/elasticsearch \
-            /usr/local/bin/run >/dev/null
+        docker run -v $VOLUME --name=$CONTAINER_NAME -d elasticsearch:1.5 >/dev/null
         echo "started."
     else
         echo "ok."
