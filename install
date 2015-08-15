@@ -1,4 +1,4 @@
 #!/bin/bash
 
 # Build docker image
-docker pull elasticsearch:1.5
+docker pull elasticsearch:1.7
