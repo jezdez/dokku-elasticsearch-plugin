@@ -14,7 +14,7 @@ dokku plugins-install
 This plugin also requires the dokku-link plugin to be installed:
 https://github.com/rlaneve/dokku-link
 
-The docker image is the official elasticsearch:1.5 image.
+The docker image is the official elasticsearch:latest image.
 The multicast discovery is disabled by default.
 
 Commands

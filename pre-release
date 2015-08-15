@@ -33,7 +33,7 @@ if [[ -d $HOST_DIR ]]; then
         fi
         CWD=$(cd $(dirname $0); pwd)
         CONFIG="$CWD/config:/usr/share/elasticsearch/config"
-        docker run -v $VOLUME -v $CONFIG --name=$CONTAINER_NAME -d elasticsearch:1.5 >/dev/null
+        docker run -v $VOLUME -v $CONFIG --name=$CONTAINER_NAME -d elasticsearch:latest >/dev/null
         echo "started."
     else
         echo "ok."
