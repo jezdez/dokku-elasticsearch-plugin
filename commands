@@ -70,7 +70,7 @@ case "$1" in
     # Launch container
     CWD=$(cd $(dirname $0); pwd)
     CONFIG="$CWD/config:/usr/share/elasticsearch/config"
-    docker run -v $VOLUME -v $CONFIG --name=$CONTAINER_NAME -d elasticsearch:latest
+    docker run --restart always -v $VOLUME -v $CONFIG --name=$CONTAINER_NAME -d elasticsearch:latest
 
     # Link to a potential existing app
     dokku elasticsearch:link $APP $APP
