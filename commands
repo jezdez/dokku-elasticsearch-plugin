@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e;
+#!/usr/bin/env bash
+set -e; [[ $DOKKU_TRACE ]] && set -x
 
 # Check if name is specified
 if [[ $1 == elasticsearch:* ]]; then
@@ -45,7 +45,7 @@ fi
 case "$1" in
   elasticsearch:create)
     # Check if Elasticsearch container is installed
-    IMAGE=$(docker images | grep "jezdez/elasticsearch" | awk '{print $3}')
+    IMAGE=$(docker images | grep "elasticsearch" | awk '{print $3}')
     if [[ -z $IMAGE ]]; then
         echo "Elasticsearch image not found... Did you run 'dokku plugins-install' ?"
         exit 1
@@ -55,6 +55,7 @@ case "$1" in
     ID=$(docker ps | grep "$CONTAINER_NAME" | awk '{print $1}')
     if [[ ! -z "$ID" ]]; then
         docker stop $ID > /dev/null
+        docker rm $ID > /dev/null
     fi
 
     # Check if an existing DB volume exists
@@ -64,11 +65,12 @@ case "$1" in
         mkdir -p $HOST_DIR
         chown -R dokku:dokku $HOST_DIR
     fi
-    VOLUME="$HOST_DIR:/var/lib/elasticsearch"
+    VOLUME="$HOST_DIR:/usr/share/elasticsearch/data"
 
     # Launch container
-    docker run -v $VOLUME -name=$CONTAINER_NAME -d jezdez/elasticsearch \
-        /usr/local/bin/run
+    CWD=$(cd $(dirname $0); pwd)
+    CONFIG="$CWD/config:/usr/share/elasticsearch/config"
+    docker run --restart always -v $VOLUME -v $CONFIG --name=$CONTAINER_NAME -d elasticsearch:latest
 
     # Link to a potential existing app
     dokku elasticsearch:link $APP $APP
@@ -137,6 +139,10 @@ case "$1" in
     elasticsearch:link <app> <container>                    Link an app to a Elasticsearch container
     elasticsearch:logs <app>                                Display last logs from Elasticsearch container
 EOF
+    ;;
+
+  *)
+    exit $DOKKU_NOT_IMPLEMENTED_EXIT
     ;;
 
 esac

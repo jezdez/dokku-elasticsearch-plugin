@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -e; [[ $DOKKU_TRACE ]] && set -x
+
+APP="$1"
+PLUGIN_NAME="elasticsearch"
+CONTAINER_NAME="${PLUGIN_NAME}_${APP}"
+HOST_DIR="$DOKKU_ROOT/$APP/$PLUGIN_NAME"
+ENVVAR_NAME="ELASTICSEARCH_URL"
+
+# Check if an existing DB volume exists
+if [[ -d $HOST_DIR ]]; then
+    # Check if Elasticsearch container is installed
+    IMAGE=$(docker images | grep "elasticsearch" | awk '{print $3}')
+    if [[ -z $IMAGE ]]; then
+        echo "Elasticsearch image not found... Did you run 'dokku plugins-install' ?"
+        exit 1
+    fi
+
+    echo -n "-----> Checking status of elasticsearch... "
+    CONTAINER_ID=$(docker ps | grep "$CONTAINER_NAME" | awk '{print $1}')
+    # If the elasticsearch container is stopped, start it, before the application is deployed
+    if [[ -z "$CONTAINER_ID" ]]; then
+        echo "stopped."
+
+        VOLUME="$HOST_DIR:/usr/share/elasticsearch/data"
+
+        # Launch container
+        echo -n "       Launching elasticsearch... "
+        # remove stopped container if any
+        CONTAINER_ID=$(docker ps -a | grep "$CONTAINER_NAME" | awk '{print $1}')
+        if [[ ! -z "$CONTAINER_ID" ]]; then
+            docker rm $CONTAINER_ID >/dev/null
+        fi
+        CWD=$(cd $(dirname $0); pwd)
+        CONFIG="$CWD/config:/usr/share/elasticsearch/config"
+        docker run -v $VOLUME -v $CONFIG --name=$CONTAINER_NAME -d elasticsearch:latest >/dev/null
+        echo "started."
+    else
+        echo "ok."
+    fi
+fi
